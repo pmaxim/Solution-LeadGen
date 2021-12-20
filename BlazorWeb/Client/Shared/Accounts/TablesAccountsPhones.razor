@@ -1,0 +1,69 @@
+﻿@using BlazorWeb.Shared.Models
+@using BlazorWeb.Shared.Services
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@inject HttpClient _http
+@inject MyScopeService _mss
+
+@if (_model.List.Count > 0)
+{
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>Id</th>
+            <th>Phone</th>
+            <th>Provider</th>
+            <th>Sid</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var p in _model.List)
+        {
+            <tr>
+                <td>@p.Id</td>
+                <td>@p.Phone</td>
+                @if (p.IsVonage)
+                {
+                    <td>Vonage</td>
+                }
+                else
+                {
+                    <td>Twilio</td>
+                }
+                <td>@p.Sid</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private App? _main;
+    private AccountNumbersViewModel _model = new AccountNumbersViewModel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _main = (App)_mss["App"];
+        _main.TablesAccountsPhonesEvent += TablesAccountsPhonesEvent;
+        _main.ButtonAccountEditEvent += TablesAccountsPhonesEvent;
+
+        await GetAccountNumbers();
+    }
+
+    private async Task GetAccountNumbers()
+    {
+        try
+        {
+            _model = await _http.GetFromJsonAsync<AccountNumbersViewModel>("Accounts/GetAccountNumbers") ?? throw new InvalidOperationException();
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+
+    private async void TablesAccountsPhonesEvent(bool data)
+    {
+        await GetAccountNumbers();
+        await InvokeAsync(StateHasChanged);
+    }
+}

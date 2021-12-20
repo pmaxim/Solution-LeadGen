@@ -1,0 +1,30 @@
+﻿@page "/accounts"
+@using BlazorWeb.Client.Shared.Accounts
+@using BlazorWeb.Client.Shared.Button
+@using BlazorWeb.Client.Shared.Modal
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "admin,agent")]
+
+<div class="card">
+    <div class="card-header">
+        <h4>Your Accounts</h4>
+    </div>
+    <div class="card-body">
+        <span id="add-account" title="Add Account">
+            <ButtonAccountEdit></ButtonAccountEdit>
+            Add Account
+        </span>
+        <TableAccount></TableAccount>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h4>Current Phones</h4>
+    </div>
+    <div class="card-body">
+        <TablesAccountsPhones></TablesAccountsPhones>
+    </div>
+</div>
+
+<ModalAccountEdit></ModalAccountEdit>

@@ -1,0 +1,88 @@
+﻿@using BlazorWeb.Shared.Services
+@inject NavigationManager _navigation
+@inject IJSRuntime _jsRuntime
+@using BrowserInterop
+@using BrowserInterop.Extensions
+@using System.Reflection.Metadata
+@inject MyScopeService _mss
+@inject AuthenticationStateProvider _authenticationStateProvider 
+
+<div class="top-row  navbar navbar-dark">
+    <a class="navbar-brand" style="padding-left: 30px;" href="" @onclick=@(() => MainOrChat(true))>
+        LeadGen @DateTime.Now.Year
+    </a>
+    <span class="float-end">
+        @if (_signalRonLine)
+        {
+            <span class="oi oi-audio text-white" aria-hidden="true"></span>
+        }
+        @if (_onLine)
+        {
+            <span class="oi oi-signal text-white" aria-hidden="true"></span>
+        }
+    </span>
+    <button class="navbar-toggler" @onclick="@(() => ToggleNavMenu(""))">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+</div>
+
+@*https://inverser.pro/106-open-iconic*@
+
+<div class="@NavMenuCssClass">
+    @if (_full)
+    {
+        <nav class="flex-column">
+            <div class="nav-item px-3">
+                <AuthorizeView Roles="admin,agent">
+                    <NotAuthorized>
+                        <NavLink class="nav-link" href="" Match="NavLinkMatch.All" @onclick="@(() => ToggleNavMenu(""))">
+                            <span class="oi oi-home" aria-hidden="true"></span> Home
+                        </NavLink>
+                    </NotAuthorized>
+                    <Authorized>
+                        <NavLink class="nav-link" href="dashboard" @onclick="@(() => ToggleNavMenu("dashboard"))">
+                            <span class="oi oi-bar-chart" aria-hidden="true"></span> Dashboard
+                        </NavLink>
+                        
+                        <NavLink class="nav-link" href="upload" @onclick="@(() => ToggleNavMenu("upload"))">
+                            <span class="oi oi-phone" aria-hidden="true"></span> Upload 
+                        </NavLink>
+
+                        <NavLink class="nav-link" href="javascript:void(0)" @onclick="() => _expandSettings = !_expandSettings">
+                            <span class="oi oi-cog" aria-hidden="true"></span> Settings
+                        </NavLink>
+
+                        @if (_expandSettings)
+                        {
+                            <NavLink class="nav-link ml-2" href="accounts">
+                                <span class="oi oi-document" aria-hidden="true"></span> Accounts
+                            </NavLink>
+                            if (_admin)
+                            {
+                                <NavLink class="nav-link" href="current-users">
+                                    <span class="oi oi-people" aria-hidden="true"></span> Current Users
+                                </NavLink>
+
+                                <NavLink class="nav-link" href="hangfire">
+                                    <span class="oi oi-people" aria-hidden="true"></span> Hangfire
+                                </NavLink>
+                            }
+                        }
+                    </Authorized>
+                </AuthorizeView>
+            </div>
+        </nav>
+    }
+    else
+    {
+        <ul class="nav flex-column">
+            <li class="nav-item px-3" @onclick=@(() => MainOrChat(true))>
+                <NavLink class="nav-link" href="@_link">
+                    <span class="oi oi-puzzle-piece"></span> Exit
+                </NavLink>
+            </li>
+        </ul>
+    }
+</div>
+
+

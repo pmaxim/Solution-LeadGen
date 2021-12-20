@@ -1,0 +1,29 @@
+﻿@using BlazorWeb.Shared.Services
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@inject HttpClient _http
+@inject MyScopeService _mss
+
+<label id="template-upload" class="mb-0 c-p">
+    <span @onclick="@(Stop)" class="oi oi-media-pause"></span>
+</label>
+
+@code {
+    private App? _main;
+
+    protected override void OnInitialized()
+    {
+        _main = (App)_mss["App"];
+    }
+
+    private async void Stop()
+    {
+        try
+        {
+            await _http.GetAsync("Run/StopRings");
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+}

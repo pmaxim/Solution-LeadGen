@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Entities\Message.cs" />
+    <Compile Remove="Entities\Voice.cs" />
+    <Compile Remove="Repositories\Concrete\EfMessageRepository.cs" />
+    <Compile Remove="Repositories\Concrete\EfProductRepository.cs" />
+    <Compile Remove="Entities\Product.cs" />
+    <Compile Remove="Repositories\Concrete\EfVoiceRepository.cs" />
+    <Compile Remove="Repositories\IMessageRepository.cs" />
+    <Compile Remove="Repositories\IProductRepository.cs" />
+    <Compile Remove="Repositories\IVoiceRepository.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="Repositories\IVacationCompaniesRepository" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="6.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer.Design" Version="2.0.0-preview1-final" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+</Project>

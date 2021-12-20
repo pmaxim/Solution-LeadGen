@@ -1,0 +1,7 @@
+﻿.span-btn-dark-disabled {
+    color: #fff;
+    background-color: #212529;
+    border-color: #212529;
+    pointer-events: none;
+    opacity: .65;
+}

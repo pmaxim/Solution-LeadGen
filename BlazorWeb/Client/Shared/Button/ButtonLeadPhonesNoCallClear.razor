@@ -1,0 +1,35 @@
+﻿@using BlazorWeb.Shared.Services
+@inject HttpClient _http
+@inject MyScopeService _mss
+
+<label id="template-upload" class="mb-0 c-p">
+    @if (_spinner)
+    {
+        <span class="spinner-border text-primary" role="status">
+            <span class="sr-only"></span>
+        </span>
+    }
+    else
+    {
+        <span @onclick="@(Remove)" class="oi oi-x"></span>
+    }
+</label>
+
+@code {
+    private bool _spinner;
+    private App? _main;
+
+    protected override void OnInitialized()
+    {
+        _main = (App)_mss["App"];
+    }
+
+    private async void Remove()
+    {
+        _spinner = true;
+        await _http.GetFromJsonAsync<bool>("Upload/RemovePhones/?isCall=false");
+        _main?.TableUploadPhonesChange(true);
+        _spinner = false;
+        await InvokeAsync(StateHasChanged);
+    }
+}

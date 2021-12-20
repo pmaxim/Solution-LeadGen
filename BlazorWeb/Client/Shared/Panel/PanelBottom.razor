@@ -1,0 +1,39 @@
+﻿@using BlazorWeb.Shared.Services
+@using BlazorWeb.Shared.Models
+@inject MyScopeService _mss
+
+@if (_isShow)
+{
+    <div class="fixed-bottom alert @Class text-center" role="alert">@_subject</div>
+}
+
+
+@code {
+    private App? _main;
+    private bool _isShow;
+    private string? _subject;
+
+    [Parameter]
+    public string? Class { get; set; }
+
+    [Parameter]
+    public int Timer { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _main = (App)_mss["App"];
+        _main.PanelUploadEvent += PanelUploadEvent;
+    }
+
+    private async void PanelUploadEvent(BoolString data)
+    {
+        _isShow = data.Flag;
+        _subject = data.Flag ? data.Value : string.Empty;
+        await InvokeAsync(StateHasChanged);
+        if (Timer == 0) return;
+        await Task.Delay(Timer * 1000);
+        _isShow = false;
+        _subject = string.Empty;
+        await InvokeAsync(StateHasChanged);
+    }
+}

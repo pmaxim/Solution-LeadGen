@@ -1,0 +1,95 @@
+﻿@using Microsoft.AspNetCore.Components
+@using Blazored.Modal
+@using BlazorWeb.Shared.Models
+@inject HttpClient _http
+
+@*https://github.com/Blazored/Modal*@
+
+<div>
+    <div class="row">
+        <div class="col-sm-12 col-md-6">
+            <div class="form-group">
+                <label for="friendlyNameN">FriendlyName</label>
+                <input type="text" class="form-control"
+                       id="friendlyNameN"
+                       name="friendlyNameN"
+                       @bind="_model.FriendlyName"
+                       placeholder="">
+            </div>
+        </div>
+        <div class="col-sm-12 col-md-6">
+            <div class="form-group">
+                <label for="use-for">Use for</label>
+                <div class="form-inline" id="use-for">
+                    <label for="isMms">MMS</label>
+                    <input type="checkbox"
+                           class="form-control ml-1"
+                           id="isMms"
+                           name="isMms"
+                           @bind="_model.IsMms">
+
+                    <label for="isMms" class="ml-2">SMS</label>
+                    <input type="checkbox"
+                           class="form-control ml-1"
+                           id="isSms"
+                           name="isSms"
+                           @bind="_model.IsSms">
+
+                    <label for="isVoice" class="ml-2">VOICE</label>
+                    <input type="checkbox"
+                           class="form-control ml-1"
+                           id="isVoice"
+                           name="isVoice"
+                           @bind="_model.IsVoice">
+                </div>
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="form-group">
+                <label for="smsUrl">SmsUrl</label>
+                <input type="text" class="form-control"
+                       id="smsUrl"
+                       name="smsUrl"
+                       @bind="_model.SmsUrl"
+                       placeholder="">
+            </div>
+        </div>
+        <div class="col-12">
+            <div class="form-group">
+                <label for="voiceUrl">VoiceUrl</label>
+                <input type="text" class="form-control"
+                       id="voiceUrl"
+                       name="voiceUrl"
+                       @bind="_model.VoiceUrl"
+                       placeholder="">
+            </div>
+        </div>
+    </div>
+
+    <button @onclick="SaveNumber" class="btn btn-primary" disabled="@_disableUpdate">Save changes</button>
+    <button @onclick="Cancel" class="btn btn-secondary">Cancel</button>
+</div>
+
+@code {
+    [CascadingParameter] BlazoredModalInstance? BlazorModal { get; set; }
+    [Parameter] public TwilioNumbersViewItem? TwilioNumber { get; set; }
+    private TwilioNumbersViewItem? _model = new TwilioNumbersViewItem();
+    private bool _disableUpdate = false;
+
+    protected override void OnInitialized()
+    {
+        _model = TwilioNumber;
+    }
+
+    private async Task SaveNumber()
+    {
+        _disableUpdate = true;
+        if (_model != null) await _http.PostAsJsonAsync<TwilioNumbersViewItem>("TwilioSetting/SaveNumber", _model);
+        _disableUpdate = false;
+    }
+
+    private async Task Cancel()
+    {
+        await BlazorModal?.CancelAsync()!;
+    }
+}

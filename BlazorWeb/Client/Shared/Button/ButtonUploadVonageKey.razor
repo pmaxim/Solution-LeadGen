@@ -1,0 +1,56 @@
+﻿@using System.Net.Http.Headers
+@inject HttpClient _http
+@using BlazorWeb.Shared.Models
+@using System.Net
+
+<InputFile OnChange="LoadFiles" id="key-file" class="d-none" accept=".key" />
+
+<label class="mb-0 c-p" for="key-file">
+    <span class="btn btn-dark @SeeDisabled()" title="Add Private Key"
+            disabled="@DisabledKey" for="key-file">
+        Add Private Key
+    </span>
+</label>
+
+@code {
+    //https://docs.microsoft.com/en-us/aspnet/core/blazor/file-uploads?view=aspnetcore-6.0&pivots=webassembly
+    [Parameter]
+    public bool DisabledKey { get; set; }
+    [Parameter]
+    public string? AppId { get; set; }
+
+    private async void LoadFiles(InputFileChangeEventArgs e)
+    {
+        const long maxFileSize = 1024 * 1024 * 15;
+        using var content = new MultipartFormDataContent();
+        var file = e.GetMultipleFiles().FirstOrDefault();
+        if(file == null) return;
+        try
+        {
+            var fileContent = 
+                new StreamContent(file.OpenReadStream(maxFileSize));
+
+            fileContent.Headers.ContentType = 
+                new MediaTypeHeaderValue("text/plain");
+
+            content.Add(
+                content: fileContent,
+                name: "\"files\"",
+                fileName: file.Name);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex);
+            return;
+        }
+        var response = await _http.PostAsync($"Upload/UploadVonageKey/?appId={AppId}", content);
+
+        var newUploadResults = await response.Content.ReadFromJsonAsync<IList<UploadResult>>();
+    }
+
+    private string SeeDisabled()
+    {
+        return DisabledKey ? "span-btn-dark-disabled" : string.Empty;
+    }
+
+}

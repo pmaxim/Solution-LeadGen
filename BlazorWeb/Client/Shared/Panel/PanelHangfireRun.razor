@@ -1,0 +1,63 @@
+﻿@using BlazorWeb.Shared.Services
+@using BlazorWeb.Shared.Models
+@inject MyScopeService _mss
+
+@if (_isShow)
+{
+    <table class="table panel-hungfire-run">
+        <tbody>
+        <tr class="table-primary">
+            <th>User name</th>
+            <td>@_model.UserName</td>
+        </tr>
+        <tr class="table-success">
+            <th>From</th>
+            <td>@_model.From</td>
+        </tr>
+        <tr class="table-info">
+            <th>To</th>
+            <td>@_model.To</td>
+        </tr>
+        <tr class="table-secondary">
+            <th>Account</th>
+            <td>@_account</td>
+        </tr>
+        <tr class="table-danger">
+            <th>Current</th>
+            <td>@_model.Current</td>
+        </tr>
+        <tr class="table-warning">
+            <th>Total</th>
+            <td>@_model.Total</td>
+        </tr>
+        </tbody>
+    </table>
+}
+
+
+@code {
+    private App? _main;
+    private bool _isShow;
+    private HangfireRingModel? _model;
+    private string? _account;
+
+    [Parameter]
+    public string? Class { get; set; }
+
+    [Parameter]
+    public int Timer { get; set; }
+
+    protected override void OnInitialized()
+    {
+        _main = (App)_mss["App"];
+        _main.HangfireRunRing += HangfireRunRing;
+    }
+
+    private async void HangfireRunRing(HangfireRingModel data)
+    {
+        _isShow = true;
+        _model = data;
+        if(_model.Current > 0) _account = _model.IsVonage ? ShareConstants.Vonage : ShareConstants.Twilio;
+        await InvokeAsync(StateHasChanged);
+    }
+}

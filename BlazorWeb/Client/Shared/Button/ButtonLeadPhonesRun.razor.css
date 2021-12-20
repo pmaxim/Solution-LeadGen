@@ -1,0 +1,25 @@
+﻿#template-upload {
+    -ms-align-items: center;
+    -o-align-items: center;
+    -webkit-align-items: center;
+    align-items: center;
+    -o-justify-content: center;
+    -webkit-justify-content: center;
+    justify-content: center;
+    background: #d63384;
+    border-radius: 50%;
+    display: flex;
+    font-weight: 500;
+    -ms-transition: box-shadow .1s ease-in,background-color .1s ease-in;
+    -o-transition: box-shadow .1s ease-in,background-color .1s ease-in;
+    -webkit-transition: box-shadow .1s ease-in,background-color .1s ease-in;
+    transition: box-shadow .1s ease-in,background-color .1s ease-in;
+    width: 50px;
+    height: 50px;
+    color: #FFFFFF;
+}
+
+#template-upload:hover {
+    cursor: pointer;
+    background: #050e7c;
+}

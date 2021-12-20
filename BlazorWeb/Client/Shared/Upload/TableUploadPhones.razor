@@ -1,0 +1,72 @@
+﻿@using BlazorWeb.Shared.Models
+@using BlazorWeb.Shared.Services
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@inject HttpClient _http
+@inject MyScopeService _mss
+
+@if (_model.List.Count > 0)
+{
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>Wait Call</th>
+            <th>Used</th>
+            <th>Title</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var p in _model.List)
+        {
+            <tr>
+                <td>@p.CountNoCall</td>
+                <td>@p.CountIsCall</td>
+                <td>@p.Title</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private App? _main;
+    private TablePhonesViewModel _model = new TablePhonesViewModel();
+    private int _hangfireCount;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _hangfireCount = 0;
+        _main = (App)_mss["App"];
+        _main.TableUploadPhonesEvent += TableUploadPhonesEvent;
+        _main.HangfireRunRing += HangfireRunRing;
+
+        await GetTablePhones(false);
+    }
+
+    private async void HangfireRunRing(HangfireRingModel data)
+    {
+        _hangfireCount++;
+        if(_hangfireCount < 100) return;
+        _hangfireCount = 0;
+        await GetTablePhones(true);
+    }
+
+    private async Task GetTablePhones(bool refresh)
+    {
+        try
+        {
+            _model = (await _http.GetFromJsonAsync<TablePhonesViewModel>("Upload/GetTablePhones"))!;
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+
+        if(refresh) await InvokeAsync(StateHasChanged);
+    }
+
+    private async void TableUploadPhonesEvent(bool data)
+    {
+        await GetTablePhones(data);
+    }
+
+}

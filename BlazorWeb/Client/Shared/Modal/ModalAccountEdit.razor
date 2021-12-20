@@ -1,0 +1,276 @@
+﻿@using BlazorWeb.Client.Shared.Button
+@using Microsoft.AspNetCore.Components
+@using BlazorWeb.Shared.Models
+@using BlazorWeb.Shared.Services
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@inject HttpClient _http
+@inject MyScopeService _mss
+
+<div class="modal @_show" style="@_style" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Modal title</h5>
+                <button type="button" class="btn-close" @onclick="Close"></button>
+            </div>
+            <div class="modal-body">
+                @if (_model.IsVonage)
+                {
+                    <span class="text-nowrap">
+                        Please see
+                        <a target="_blank" class="link-dark" href="https://dashboard.nexmo.com">Vonage API Dashboard</a>
+                    </span>
+                }
+                else
+                {
+                    <span class="text-nowrap">
+                        Please see
+                        <a target="_blank" class="link-dark" href="https://console.twilio.com/">Twilio API Dashboard</a>
+                    </span>
+                }
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="sid" class="form-label">Sid</label>
+                        <input type="text" class="form-control"
+                               id="sid"
+                               name="sid"
+                               @bind="_model.Sid"
+                               placeholder="">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="token" class="form-label">Token</label>
+                        <input type="text" class="form-control"
+                               id="token"
+                               name="token"
+                               @bind="_model.Token"
+                               placeholder="">
+                    </div>
+                    <div class="col-md-12">
+                        <label for="title" class="form-label">Title</label>
+                        <input type="text" class="form-control"
+                               id="title"
+                               name="title"
+                               @bind="_model.Title"
+                               placeholder="">
+                    </div>
+                    <div class="col-md-6">
+                        <input class="form-check-input" type="checkbox"
+                               name="IsVonage"
+                               value="" id="IsVonage"
+                               disabled="@DisabledIsVonage()"
+                               @bind="_model.IsVonage">
+                        <label class="form-check-label" for="IsVonage">
+                            Is Vonage
+                        </label>
+                    </div>
+                </div>
+                @if (_model.IsVonage)
+                {
+                    <span class="text-nowrap">
+                        Please see
+                        <a target="_blank" class="link-dark" href="https://dashboard.nexmo.com/applications">Your applications</a>
+                    </span>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="appId" class="form-label">Application ID (length 36 characters)</label>
+                            <input type="text" class="form-control"
+                                   id="appId"
+                                   name="appId"
+                                   @bind="_modelApp.AppId"
+                                   placeholder="">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="appTitle" class="form-label">Title</label>
+                            <input type="text" class="form-control"
+                                   id="appTitle"
+                                   name="appTitle"
+                                   @bind="_modelApp.Title"
+                                   placeholder="">
+                        </div>
+                        <div class="col-sm-12 mt-2">
+                            <ButtonUploadVonageKey DisabledKey="@DisabledPrivateKey()" AppId="@_modelApp.AppId"></ButtonUploadVonageKey>
+                            <button class="btn btn-success" title="Add Application"
+                                    disabled="@DisabledAddApplication()"
+                                    @onclick="AddApplication">
+                                Add Application
+                            </button>
+                            <button class="btn btn-danger"
+                                    title="Remove Application"
+                                    @onclick="RemoveApplication"
+                                    disabled="@DisabledRemoveApplication()">
+                                Remove
+                            </button>
+                        </div>
+                    </div>
+                    @if (_model.List.Count > 0)
+                    {
+                        <table class="table table-striped">
+                            <thead>
+                            <tr>
+                                <th>Id</th>
+                                <th>AppId</th>
+                                <th>Title</th>
+                                <th>Active</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var p in _model.List)
+                            {
+                                <tr class="c-p">
+                                    <td @onclick="@(() => EditApplication(p))">@p.Id</td>
+                                    <td @onclick="@(() => EditApplication(p))">@p.AppId</td>
+                                    <td @onclick="@(() => EditApplication(p))">@p.Title</td>
+                                    <td>
+                                        <input type="checkbox" class="form-check-input"
+                                               @onchange="(e) => IsActiveApplication(p)"
+                                               checked="@p.IsActive"/>
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    }
+                }
+            </div>
+            <div class="modal-footer justify-content-start">
+                <button @onclick="SaveAccount" class="btn btn-primary">Save changes</button>
+                <button @onclick="Close" class="btn btn-secondary float-start">Cancel</button>
+
+                <button @onclick="RemoveAccount" class="btn btn-danger ms-auto" 
+                        disabled="@DisabledRemove()">Remove</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div @onclick="Close" class="modal-backdrop @_show" style="@_style"></div>
+
+@code {
+    private AccountModel _model = new AccountModel();
+    private AccountApplicationModel _modelApp = new AccountApplicationModel();
+    private App? _main;
+    private string _title = string.Empty;
+    private string _show = string.Empty;
+    private string _style = "display: none;";
+
+    protected override void OnInitialized()
+    {
+        _main = (App)_mss["App"];
+        _main.ModalAccountEditEvent += ModalAccountEditEvent;
+    }
+
+    private async Task GetAccount(int accountId)
+    {
+        try
+        {
+            _model = (await _http.GetFromJsonAsync<AccountModel>($"Accounts/GetAccount/?accountId={accountId}"))!;
+            await Open();
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+
+    private async void SaveAccount()
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync<AccountModel>("Accounts/SaveAccount", _model);
+            var f = await response.Content.ReadFromJsonAsync<bool>();
+            if(f) await Close();
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+
+    private bool DisabledRemove()
+    {
+        return _model.Id == 0;
+    }
+
+    private bool DisabledAddApplication()
+    {
+        if (_modelApp.Id != 0) return true;
+        return DisabledPrivateKey();
+    }
+
+    private bool DisabledRemoveApplication()
+    {
+        return _modelApp.Id == 0;
+    }
+
+    private bool DisabledIsVonage()
+    {
+        return _model.Id != 0;
+    }
+
+    private bool DisabledPrivateKey()
+    {
+        if (string.IsNullOrEmpty(_modelApp.AppId)) return true;
+        return _modelApp.AppId.Length != 36;
+    }
+
+    private async void RemoveAccount()
+    {
+        try
+        {
+            var f = (await _http.GetFromJsonAsync<bool>($"Accounts/RemoveAccount/?accountId={_model.Id}"))!;
+            if(f) await Close();
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+
+    private async void ModalAccountEditEvent(int accountId)
+    {
+        _model = new AccountModel{ Id = accountId };
+        _title = accountId == 0 ? "Create new Account" : 
+            $"Edit {accountId}";
+        if (accountId > 0) await GetAccount(accountId);
+        else await Open();
+    }
+
+    private async Task Close()
+    {
+        _model = new AccountModel();
+        _modelApp = new AccountApplicationModel();
+        _show = string.Empty;
+        _style = "display: none;";
+        await InvokeAsync(StateHasChanged);
+
+        _main?.ButtonAccountEditChange(true);
+    }
+
+    private async Task Open()
+    {
+        _show = "show";
+        _style = "display: block;";
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void IsActiveApplication(AccountApplicationModel i)
+    {   
+        i.IsActive = !i.IsActive;
+    }
+
+    private void EditApplication(AccountApplicationModel application)
+    {
+        _modelApp = application;
+    }
+
+    private void AddApplication()
+    {
+        _model.List.Add(_modelApp);
+    }
+
+    private void RemoveApplication()
+    {
+        _model.List.Remove(_modelApp);
+        _modelApp = new AccountApplicationModel();
+    }
+}

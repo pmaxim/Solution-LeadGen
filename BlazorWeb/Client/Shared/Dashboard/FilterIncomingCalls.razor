@@ -1,0 +1,41 @@
+﻿@using BlazorWeb.Shared.Models
+<div class="row g-3 bg-info">
+    <div class="col">
+        <div class="input-group mb-3">
+            <span class="input-group-text" id="from-date">From</span>
+            <input type="date"
+                   @bind="Filter.FromDate"
+                   class="form-control" placeholder=""
+                   aria-describedby="from-date"
+                   aria-label="From Date">
+        </div>
+    </div>
+    <div class="col">
+        <div class="input-group mb-3">
+            <span class="input-group-text" id="to-date">To</span>
+            <input type="date"
+                   @bind="Filter.ToDate"
+                   class="form-control" placeholder=""
+                   aria-describedby="to-date"
+                   aria-label="To Date">
+        </div>
+    </div>
+    <div class="col">
+        <button class="btn btn-success" @onclick="Refresh">
+            Refresh
+        </button>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public FilterDashboardModel Filter { get; set; }
+
+    [Parameter]
+    public TableIncomingCalls Parent { get; set; }
+
+    private async void Refresh()
+    {
+        await Parent.Refresh();
+    }
+}

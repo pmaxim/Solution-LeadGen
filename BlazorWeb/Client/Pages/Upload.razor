@@ -1,0 +1,59 @@
+﻿@page "/upload"
+@using BlazorWeb.Client.Shared.Button
+@using BlazorWeb.Client.Shared.Panel
+@using BlazorWeb.Client.Shared.Upload
+@using BlazorWeb.Shared.Models
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "admin,agent")]
+
+<div class="card">
+    <div class="card-header">
+        <h4>Upload</h4>
+    </div>
+    <div class="card-body">
+        <p>load phones from CSV files.</p>
+        <span class="text-nowrap">
+            Create files on the
+            <a target="_blank" class="font-weight-bold link-dark" href="https://leadsbroker.online">LeadsBroker</a>
+        </span>
+        <div class="clearfix mt-2">
+            <span class="button-span" title="Add Phones from CSV">
+                <ButtonLeadPhonesUploadCsv></ButtonLeadPhonesUploadCsv>
+                Upload
+            </span>
+            <span class="button-span" title="Delete all used numbers">
+                <ButtonLeadPhonesIsCallClear></ButtonLeadPhonesIsCallClear>
+                All Used
+            </span>
+            <span class="button-span" title="Delete all pending numbers">
+                <ButtonLeadPhonesNoCallClear></ButtonLeadPhonesNoCallClear>
+                All Pending
+            </span>
+        </div>
+
+        <hr/>
+
+        <TableUploadPhones></TableUploadPhones>
+        
+        <hr/>
+        
+        <TableSheduleRun></TableSheduleRun>
+        
+        <hr/>
+        
+        <div class="clearfix mt-2">
+            <span class="button-span" title="Run">
+                <ButtonLeadPhonesRun></ButtonLeadPhonesRun>
+                Run Rings
+            </span>
+            <span class="button-span" title="Pause">
+                <ButtonLeadPhonesStop></ButtonLeadPhonesStop>
+                Pause Rings
+            </span>
+        </div>
+        <hr/>
+        <PanelHangfireRun></PanelHangfireRun>
+    </div>
+</div>
+
+<PanelBottom Class="alert-primary" Timer="@ShareConstants.TimerPanelBottom"></PanelBottom>

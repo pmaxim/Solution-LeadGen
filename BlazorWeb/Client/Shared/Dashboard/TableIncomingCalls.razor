@@ -1,0 +1,65 @@
+﻿@using BlazorWeb.Shared.Services
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using BlazorWeb.Shared.Models
+@inject HttpClient _http
+@inject MyScopeService _mss
+
+<FilterIncomingCalls Filter="_filter" Parent="this"></FilterIncomingCalls>
+
+@if (_model.List.Count > 0)
+{
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <th>Date</th>
+            <th>Phone</th>
+            <th>Duration (sec)</th>
+            <th>Price</th>
+            <th>Count calls</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var p in _model.List)
+        {
+            <tr>
+                <td>@p.Date</td>
+                <td>@p.To</td>
+                <td>@p.Duration</td>
+                <td>@p.Price</td>
+                <td>@p.Count</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    private App? _main;
+    private DashboardIncomingCallsViewModel _model = new DashboardIncomingCallsViewModel();
+    private FilterDashboardModel _filter = new FilterDashboardModel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _main = (App)_mss["App"];
+        await GetTableIncomingCalls();
+    }
+
+    private async Task GetTableIncomingCalls()
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync<FilterDashboardModel>($"Dashboard/GetTableIncomingCalls", _filter);
+            _model = (await response.Content.ReadFromJsonAsync<DashboardIncomingCallsViewModel>())!;
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+
+    public async Task Refresh()
+    {
+        await GetTableIncomingCalls();
+        await InvokeAsync(StateHasChanged);
+    }
+}

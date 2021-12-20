@@ -1,0 +1,101 @@
+﻿@using Microsoft.Extensions.Logging
+@using System.Net.Http.Headers
+@using System.Text
+@using BlazorWeb.Shared.Lib
+@using BlazorWeb.Shared.Models
+@using BlazorWeb.Shared.Services
+@inject ILogger<ButtonLeadPhonesUploadCsv> _logger
+@inject HttpClient _http
+@inject MyScopeService _mss
+
+<InputFile OnChange="LoadFiles" id="template-file" class="d-none" accept=".csv" multiple />
+
+<label id="template-upload" class="mb-0 c-p" for="template-file">
+    @if (_spinner)
+    {
+        <span class="spinner-border text-primary" role="status">
+            <span class="sr-only"></span>
+        </span>
+    }
+    else
+    {
+        <span class="oi oi-plus"></span>
+    }
+</label>
+
+@code {
+    //https://docs.microsoft.com/en-us/aspnet/core/blazor/file-uploads?view=aspnetcore-6.0&pivots=webassembly
+    private int _maxAllowedFiles = 3;
+    private List<string> _listPhones = new List<string>();
+    private bool _spinner;
+    private App? _main;
+
+    protected override void OnInitialized()
+    {
+        _main = (App)_mss["App"];
+    }
+
+    private async Task LoadFiles(InputFileChangeEventArgs e)
+    {
+        const long maxAllowedSize = 10 * 1024 * 1024;
+        _listPhones.Clear();
+        _spinner = true;
+        foreach (var file in e.GetMultipleFiles(_maxAllowedFiles))
+        {
+            var f = true;
+            try
+            {
+                var reader = new StreamReader(file.OpenReadStream(maxAllowedSize: maxAllowedSize));
+                int? col = null;
+                while (f)
+                {
+                    var line = await reader.ReadLineAsync();
+                    if (string.IsNullOrEmpty(line)) f = false;
+                    else
+                    {
+                        var sp = line.Split(",");
+
+                        col ??= SearchPhoneCol(sp);
+                        if (col == null) continue;
+
+                        _listPhones.Add(sp[(int)col]);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _spinner = false;
+                _logger.LogError("File: {Filename} Error: {Error}", file.Name, ex.Message);
+            }
+        }
+
+        if (_listPhones.Count == 0)
+        {
+            _spinner = false;
+            return;
+        }
+
+        var response = await _http.PostAsJsonAsync<List<string>>($"Upload/UploadPhones", _listPhones);
+        var count = await response.Content.ReadFromJsonAsync<int>();
+
+        var data = new BoolString();
+        if (count > 0)
+        {
+            data.Value = $"{count} phones uploaded!";
+            data.Flag = true;
+        }
+        _main?.PanelUploadChange(data);
+        _main?.TableUploadPhonesChange(true);
+        _spinner = false;
+    }
+
+    private int? SearchPhoneCol(string[] sp)
+    {
+        for (var i = 0; i < sp.Length; i++)
+        {
+            if (WorkLib.IsValidPhoneUsa(sp[i])) return i;
+        }
+        return null;
+    }
+
+}

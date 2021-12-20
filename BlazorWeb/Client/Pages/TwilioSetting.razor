@@ -1,0 +1,271 @@
+﻿@page "/twilio-setting"
+@using BlazorWeb.Shared.Models
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "admin,user")]
+@using AspNetMonsters.Blazor.Geolocation
+@using AutoMapper
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@inject LocationService  _locationService
+@inject HttpClient _http
+@inject IMapper _mapper
+@using BlazorTable
+@using System.Security.Cryptography.X509Certificates
+@using Blazored.Modal
+@using Blazored.Modal.Services
+@using Microsoft.AspNetCore.Components
+@inject IModalService _modal
+
+<div class="card">
+    <div class="card-header">
+        <h4>Your Twilio account</h4>
+    </div>
+    <div class="card-body">
+        <div class="info-text">
+            <p>In this section you can read and update your API keys</p>
+        </div>
+        <EditForm Model="@_model" OnValidSubmit="@HandleValidSubmit" OnInvalidSubmit="@HandleInvalidSubmit">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="row">
+                <div class="col-sm-12 col-md-6">
+                    <div class="form-group">
+                        <label for="twilioAccountSid">Twilio Account Sid</label>
+                        <InputText type="text" class="form-control"
+                                   id="twilioAccountSid"
+                                   @bind-Value="@_model.Sid"
+                                   placeholder="TwilioAccountSid"></InputText>
+                        <ValidationMessage For="@(() => _model.Sid)" />
+                    </div>
+                    <div class="form-group">
+                        <label for="twilioAuthToken">Twilio Auth Token</label>
+                        <InputText type="text" class="form-control"
+                                   id="twilioAuthToken"
+                                   @bind-Value="@_model.Token"
+                                   placeholder="TwilioAuthToken"></InputText>
+                        <ValidationMessage For="@(() => _model.Token)" />
+                    </div>
+                </div>
+                <div class="col-sm-12 col-md-6">
+                    @if (!string.IsNullOrEmpty(_model.FriendlyName))
+                    {
+                        <div class="form-group">
+                            <label for="friendlyName">Friendly Name</label>
+                            <input type="text" class="form-control"
+                                   name="friendlyName"
+                                   id="friendlyName"
+                                   @bind="_model.FriendlyName"
+                                   placeholder="FriendlyName" disabled>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(_model.Balance))
+                    {
+                        <div class="form-group">
+                            <label for="balance">Balance</label>
+                            <input type="text" class="form-control"
+                                   name="balance"
+                                   id="balance"
+                                   @bind="_model.Balance"
+                                   placeholder="Balance" disabled>
+                        </div>
+                    }
+                    @if (!string.IsNullOrEmpty(_model.DateCreated))
+                    {
+                        <div class="form-group">
+                            <label for="dateCreated">Account Date Created</label>
+                            <input type="text" class="form-control"
+                                   name="dateCreated"
+                                   id="dateCreated"
+                                   @bind="_model.DateCreated"
+                                   placeholder="DateCreated" disabled>
+                        </div>
+                    }
+
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" disabled="@_disableUpdate">
+                Update Twilio Account
+            </button>
+        </EditForm>
+    </div>
+</div>
+
+@*https://github.com/IvanJosipovic/BlazorTable*@
+
+@if (_modelNumbers.List.Count > 0)
+{
+    <div class="card">
+        <div class="card-header">
+            <h4>Your Twilio numbers</h4>
+        </div>
+        <div class="card-body">
+            <div class="info-text">
+                <p>In this section you can read and update your twilio numbers</p>
+            </div>
+
+            <div class="btn-group mb-1">
+                @if (_isSelect)
+                {
+                    <button @onclick="@SelectAll" class="btn btn-sm btn-outline-warning">Deselect</button>
+                }
+                else
+                {
+                    <button @onclick="@SelectAll" class="btn btn-sm btn-warning">Select</button>
+                }
+
+                <select class="form-control ml-2" @bind="_selectedAction">
+                    <option value="Action">Action</option>
+                    <option value="Activate">Activate</option>
+                    <option value="Deactivate">Deactivate</option>
+                    <option value="UpdateUrl">Update SmsUrl</option>
+                </select>
+                <button @onclick="@UpdateAll" class="btn btn-sm btn-primary ml-2"
+                        disabled="@DisabledUpdate()">
+                    Update
+                </button>
+            </div>
+
+            <Table TableItem="TwilioNumbersViewItem" Items="_modelNumbers.List"
+                   PageSize="15" ColumnReorder="true" TableRowClass="@(x => x.RowClass)">
+                <Column TableItem="TwilioNumbersViewItem" Title="*" Field="@(x => x.IsSelected)" Sortable="false" Filterable="false">
+                    <Template>
+                        <input type="checkbox" @bind="context.IsSelected" />
+                    </Template>
+                </Column>
+                <Column TableItem="TwilioNumbersViewItem" Title="FriendlyName" Field="@(x => x.FriendlyName)" Sortable="true" Filterable="true" />
+                <Column TableItem="TwilioNumbersViewItem" Title="PhoneNumber" Field="@(x => x.PhoneNumber)" Sortable="true" Filterable="true" />
+                <Column TableItem="TwilioNumbersViewItem" Title="Capabilities" Field="@(x => x.TextCapabilities)" Sortable="true" Filterable="true">
+                    <Template>
+                        @context.TextCapabilities
+                    </Template>
+                </Column>
+                <Column TableItem="TwilioNumbersViewItem" Title="SmsUrl" Field="@(x => x.SmsUrl)" Sortable="true" Filterable="true" />
+                <Column TableItem="TwilioNumbersViewItem" Title="Use For" Field="@(x => x.UseFor)" Sortable="true" Filterable="true" />
+                <Column TableItem="TwilioNumbersViewItem" Title="IsActive" Field="@(x => x.IsActive)" Sortable="false" Filterable="false">
+                    <Template>
+                        <input type="checkbox" @bind="context.IsActive" @onclick="@(() => IsActiveSingle(context))" />
+                    </Template>
+                </Column>
+                <Column TableItem="TwilioNumbersViewItem" Title="Action" Sortable="false" Filterable="false">
+                    <Template>
+                        <button class="btn btn-sm btn-warning" @onclick="@(() => ShowModal(context))">Edit</button>
+                    </Template>
+                </Column>
+
+                <Pager ShowPageNumber="true" ShowTotalCount="true" ShowPageSizes="true" />
+            </Table>
+        </div>
+    </div>
+}
+
+@code {
+    //private IMapper _mapper;
+    private MyProfileViewModel? _model = new MyProfileViewModel();
+    private TwilioNumbersViewModel? _modelNumbers = new TwilioNumbersViewModel();
+    private bool _disableUpdate = false;
+    private bool _isSelect = false;
+    private string _selectedAction = "Action";
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        //_mapper = Mapper;
+
+        try
+        {
+            _model = await _http.GetFromJsonAsync<MyProfileViewModel>("TwilioSetting/GetMyProfile");
+
+        }
+        catch (AccessTokenNotAvailableException exception)
+        {
+            exception.Redirect();
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await GetTwilioNumbers();
+    }
+
+    private async Task GetTwilioNumbers()
+    {
+        _disableUpdate = true;
+        _modelNumbers = new TwilioNumbersViewModel();
+        _modelNumbers = await _http.GetFromJsonAsync<TwilioNumbersViewModel>("TwilioSetting/GetTwilioNumbers");
+        _disableUpdate = false;
+    }
+
+    private async Task ShowModal(TwilioNumbersViewItem i)
+    {
+        var t = new ModalParameters();
+        t.Add("TwilioNumber", i);
+        var messageForm = _modal.Show<ModalTwilioNumber>(i.PhoneNumber, t);
+        var result = await messageForm.Result;
+        await GetTwilioNumbers();
+    }
+
+    private void SelectAll()
+    {
+        _isSelect = !_isSelect;
+        foreach (var p in _modelNumbers!.List)
+        {
+            p.IsSelected = !p.IsSelected;
+        }
+    }
+
+    private bool DisabledUpdate()
+    {
+        if (_selectedAction == "Action") return true;
+        if (!_modelNumbers!.List.Any(z => z.IsSelected)) return true;
+        return false;
+    }
+
+    private async Task UpdateAll()
+    {
+        switch (_selectedAction)
+        {
+            case "Activate":
+                await Action("Activate");
+                break;
+            case "Deactivate":
+                await Action("Deactivate");
+                break;
+            case "UpdateUrl":
+                await Action("UpdateEndPoint");
+                break;
+        }
+    }
+
+    private async Task Action(string action)
+    {
+        var list = _modelNumbers!.List
+            .Where(z => z.IsSelected)
+            .Select(z => z.Sid)
+            .ToList();
+        if (list.Count == 0) return;
+        await _http.PostAsJsonAsync<List<string>>($"TwilioSetting/{action}", list!);
+        await GetTwilioNumbers();
+        _isSelect = false;
+    }
+
+    private async Task IsActiveSingle(TwilioNumbersViewItem i)
+    {
+        var list = new List<string> { i.Sid! };
+        if (!i.IsActive) await _http.PostAsJsonAsync<List<string>>($"TwilioSetting/Activate", list);
+        else await _http.PostAsJsonAsync<List<string>>($"TwilioSetting/Deactivate", list);
+    }
+
+    protected async Task HandleValidSubmit()
+    {
+        _disableUpdate = true;
+        var response = await _http.PostAsJsonAsync<MyProfileViewModel>("TwilioSetting/UpdateTwilio", _model!);
+        _model = await response.Content.ReadFromJsonAsync<MyProfileViewModel>();
+        _disableUpdate = false;
+        await GetTwilioNumbers();
+    }
+
+    protected void HandleInvalidSubmit()
+    {
+
+    }
+}

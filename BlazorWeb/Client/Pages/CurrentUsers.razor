@@ -1,0 +1,59 @@
+﻿@page "/current-users"
+@using Microsoft.AspNetCore.Authorization
+@using BlazorWeb.Shared.Services
+@using BlazorWeb.Shared.Models
+@attribute [Authorize(Roles = "admin")]
+@inject HttpClient _http
+@inject MyScopeService _mss
+
+<div class="card">
+    <div class="card-header">
+        <h4>Active Users</h4>
+    </div>
+    <div class="card-body">
+        <div class="text-black-50">
+            <p>users on the site</p>
+        </div>
+        <button class="btn btn-success" @onclick=Refresh>
+            Refresh
+        </button>
+        <table class="table table-striped mt-2">
+            <thead>
+            <tr>
+                <th>UserName</th>
+                <th>Connect ID</th>
+                <th>Ip</th>
+            </tr>
+            </thead>
+            <tbody>
+            @foreach (var p in _connections)
+            {
+                <tr>
+                    <td>@p.UserName</td>
+                    <td>@p.ConnectionId</td>
+                    <td>@p.Ip</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    private List<SignalRConnectionModel> _connections = new List<SignalRConnectionModel>();
+    private App? _main;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _main = (App)_mss["App"];
+        var isConnected = _main.ConnectedState();
+        if (!isConnected) await _main.Connect();
+        _connections = await _main.GetCurrentConnections();
+    }
+
+    private async void Refresh()
+    {
+        _connections = await _main?.GetCurrentConnections()!;
+        StateHasChanged();
+    }
+}

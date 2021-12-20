@@ -1,0 +1,20 @@
+﻿@using BlazorWeb.Shared.Services
+@inject MyScopeService _mss
+
+<label id="template-upload" class="mb-0 c-p">
+    <span @onclick="@(Edit)" class="oi oi-plus"></span>
+</label>
+
+@code {
+    private App? _main;
+
+    protected override void OnInitialized()
+    {
+        _main = (App)_mss["App"];
+    }
+
+    private void Edit()
+    {
+        _main?.ModalAccountEditChange(0);
+    }
+}

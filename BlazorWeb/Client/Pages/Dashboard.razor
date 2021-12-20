@@ -1,0 +1,13 @@
+﻿@page "/dashboard"
+@using BlazorWeb.Client.Shared.Dashboard
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize(Roles = "admin,agent")]
+
+<div class="card">
+    <div class="card-header">
+        <h4>Dashboard</h4>
+    </div>
+    <div class="card-body">
+        <TableIncomingCalls></TableIncomingCalls>
+    </div>
+</div>
